@@ -13,16 +13,16 @@ mongoose.connect(process.env.DB_CONNECTION).then(() =>{
     console.log(err);
 });
 
-const run = () =>{
+const run = () =>{ 
     cron.schedule('* * * * * *', () =>
     {
-        expenseEmaul();
+        expenseEmail();
     });
 }
 run();
 
 app.listen(process.env.PORT,() =>{
-console.log(`server is running on port ${process.env.PORT}`);
+console.log(`Background services is running on port ${process.env.PORT}`);
 })
 
 
