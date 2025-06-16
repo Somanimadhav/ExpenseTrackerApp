@@ -20,3 +20,4 @@ if(totalExpense > 10000)
     await sendMail(messageOption); 
 }
 }
+module.exports = expenseEmail;

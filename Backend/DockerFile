@@ -1,0 +1,18 @@
+# Use Node.js image
+FROM node:18-alpine
+
+# Set working dir
+WORKDIR /usr/src/app
+
+# Copy package files and install
+COPY package.json package-lock.json ./
+RUN npm install --production
+
+# Copy the rest of the code
+COPY . .
+
+# Expose port (replace with your backend port, example 5000)
+EXPOSE 5000
+
+# Run backend server
+CMD ["npm", "start"]
