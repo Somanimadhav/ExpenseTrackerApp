@@ -14,8 +14,8 @@ function App() {
 
   const [editingExpense, setEditingExpense] = useState(null);
   const [showEditExpense, setShowEditExpense] = useState(false);
+  const [editPopupCoords, setEditPopupCoords] = useState(null);
 
-  // Fetch expenses from backend
   const fetchExpenses = () => {
     fetch("http://localhost:5000/expenses")
       .then((res) => res.json())
@@ -53,9 +53,13 @@ function App() {
     }).then(() => fetchExpenses());
   };
 
-  const handleEditClick = (expense) => {
+  const handleEditClick = (expense, event) => {
     setEditingExpense(expense);
     setShowEditExpense(true);
+    setEditPopupCoords({
+      x: event.clientX,
+      y: event.clientY,
+    });
   };
 
   const handleUpdateExpense = () => {
@@ -76,7 +80,6 @@ function App() {
     expense.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // ✅ Group expenses for pie chart
   const pieData = Object.entries(
     expenses.reduce((acc, expense) => {
       const label = expense.label || "Other";
@@ -94,189 +97,228 @@ function App() {
       <div className="flex flex-col justify-center items-center mt-[3%] w-[80%] mx-auto">
         <h1 className="text-2xl font-medium text-[#555]">Expense Tracker</h1>
 
-        <div className="relative flex justify-between items-center mt-5 w-full max-w-[800px]">
-          <button
-            className="bg-[#af8978] p-[10px] border-none outline-none cursor-pointer text-white"
-            onClick={handleAddExpense}
-          >
-            Add Expense
-          </button>
-
-          <div className="relative flex items-center gap-[300px]">
+        {/* ✅ Fixed controls layout */}
+        <div className="flex flex-wrap justify-center items-center gap-4 w-full max-w-[800px] mt-5 relative">
+          {/* Add Expense Button and Popover */}
+          <div className="relative inline-block">
             <button
-              className="bg-[#af8978] p-[10px] border-none outline-none cursor-pointer text-white"
-              onClick={handleExpenseReport}
+              className="bg-[#af8978] px-4 py-2 text-white rounded whitespace-nowrap"
+              onClick={handleAddExpense}
             >
-              Expense Report
+              Add Expense
             </button>
 
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="p-[10px] w-[150px] border-2 border-[#444] border-solid"
-            />
+            {showAddExpense && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white shadow-lg rounded-lg border border-gray-200 p-4 z-999">
+                <button
+                  className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+                  onClick={handleAddExpense}
+                >
+                  <FaWindowClose className="text-xl" />
+                </button>
+                <h2 className="text-lg font-bold text-[#af8978] mb-4 text-center">
+                  Add Expense
+                </h2>
 
-            {showExpenseReport && (
-              <div className="fixed z-[999] flex flex-col top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[400px] h-[400px] bg-[#fff] shadow-xl p-4">
-                <FaWindowClose
-                  className="self-end text-2xl text-red-500 cursor-pointer"
-                  onClick={handleExpenseReport}
-                />
-                <PieChart
-                  series={[
-                    {
-                      data:
-                        pieData.length > 0
-                          ? pieData
-                          : [{ id: 0, value: 1, label: "No Data" }],
-                      innerRadius: 25,
-                      outerRadius: 80,
-                      paddingAngle: 5,
-                      cornerRadius: 5,
-                      startAngle: -45,
-                      endAngle: 225,
-                      cx: 150,
-                      cy: 150,
-                    },
-                  ]}
-                />
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Expense Name
+                    </label>
+                    <input
+                      type="text"
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      placeholder="e.g. Groceries"
+                      className="w-98% border border-gray-300 rounded px-3 py-2 outline-none focus:border-[#af8978]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Expense Date
+                    </label>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-99% border border-gray-100 rounded px-3 py-2 outline-none focus:border-[#af8978]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Expense Amount
+                    </label>
+                    <input
+                      type="number"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      placeholder="100"
+                      className="w-99% border border-gray-300 rounded px-3 py-2 outline-none focus:border-[#af8978]"
+                    />
+                  </div>
+                  <button
+                    onClick={addExpense}
+                    className="w-full bg-[#af8978] text-white font-medium py-2 rounded hover:bg-[#8c6757] transition"
+                  >
+                    Add Expense
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* ➕ Add Expense */}
-          {showAddExpense && (
-            <div className="absolute z-[999] flex flex-col top-[20px] left-0 h-[300px] w-[300px] bg-[#fff] shadow-xl">
-              <FaWindowClose
-                className="flex justify-end items-end text-2xl text-red-500 cursor-pointer"
-                onClick={handleAddExpense}
-              />
-              <label className="mt-[10px] font-semibold text-[14px]">
-                Expense Name
-              </label>
-              <input
-                type="text"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="Snacks"
-                className="outline-none border-[#555] p-[10px] border-2 border-solid"
-              />
-              <label className="mt-[10px] font-semibold text-[14px]">
-                Expense Date
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="outline-none border-[#555] p-[10px] border-2 border-solid"
-              />
-              <label className="mt-[10px] font-semibold text-[14px]">
-                Expense Amount
-              </label>
-              <input
-                type="number"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="100"
-                className="outline-none border-[#555] p-[10px] border-2 border-solid"
-              />
-              <button
-                onClick={addExpense}
-                className="bg-[#af8978] text-white p-[10px] border-none cursor-pointer my-[10px]"
-              >
-                Add Expense
-              </button>
-            </div>
-          )}
+          <button
+            className="bg-[#af8978] px-4 py-2 text-white rounded whitespace-nowrap"
+            onClick={handleExpenseReport}
+          >
+            Expense Report
+          </button>
 
-          {/* ✏️ Edit Expense */}
-          {showEditExpense && editingExpense && (
-            <div className="absolute z-[999] flex flex-col top-[20px] left-0 h-[300px] w-[300px] bg-[#fff] shadow-xl">
-              <FaWindowClose
-                className="flex justify-end items-end text-2xl text-red-500 cursor-pointer"
-                onClick={() => {
-                  setEditingExpense(null);
-                  setShowEditExpense(false);
-                }}
-              />
-              <label className="mt-[10px] font-semibold text-[14px]">
-                Expense Name
-              </label>
-              <input
-                type="text"
-                value={editingExpense.label}
-                onChange={(e) =>
-                  setEditingExpense({
-                    ...editingExpense,
-                    label: e.target.value,
-                  })
-                }
-                className="outline-none border-[#555] p-[10px] border-2 border-solid"
-              />
-              <label className="mt-[10px] font-semibold text-[14px]">
-                Expense Date
-              </label>
-              <input
-                type="date"
-                value={editingExpense.date}
-                onChange={(e) =>
-                  setEditingExpense({
-                    ...editingExpense,
-                    date: e.target.value,
-                  })
-                }
-                className="outline-none border-[#555] p-[10px] border-2 border-solid"
-              />
-              <label className="mt-[10px] font-semibold text-[14px]">
-                Expense Amount
-              </label>
-              <input
-                type="number"
-                value={editingExpense.value}
-                onChange={(e) =>
-                  setEditingExpense({
-                    ...editingExpense,
-                    value: e.target.value,
-                  })
-                }
-                className="outline-none border-[#555] p-[10px] border-2 border-solid"
-              />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="p-2 flex-1 min-w-[150px] max-w-[300px] border-2 border-[#444] border-solid rounded"
+          />
+        </div>
+
+        {showExpenseReport && (
+          <div className="fixed z-[999] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] bg-white shadow-xl p-6 rounded-lg border border-gray-200">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+              onClick={handleExpenseReport}
+            >
+              <FaWindowClose className="text-xl" />
+            </button>
+            <h2 className="text-lg font-bold text-[#af8978] mb-4 text-center">
+              Expense Report
+            </h2>
+            <PieChart
+              series={[
+                {
+                  data:
+                    pieData.length > 0
+                      ? pieData
+                      : [{ id: 0, value: 1, label: "No Data" }],
+                  innerRadius: 25,
+                  outerRadius: 80,
+                  paddingAngle: 5,
+                  cornerRadius: 5,
+                  startAngle: -45,
+                  endAngle: 225,
+                  cx: 100,
+                  cy: 100,
+                },
+              ]}
+              height={200}
+              width={250}
+            />
+          </div>
+        )}
+
+        {/* ✏️ Edit Expense Popover */}
+        {showEditExpense && editingExpense && editPopupCoords && (
+          <div
+            className="absolute bg-white border border-gray-200 rounded shadow-lg p-4 z-50"
+            style={{
+              top: editPopupCoords.y + 10,
+              // left: editPopupCoords.x + 10,
+              width: "250px",
+            }}
+          >
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+              onClick={() => {
+                setEditingExpense(null);
+                setShowEditExpense(false);
+              }}
+            >
+              <FaWindowClose className="text-xl" />
+            </button>
+
+            <h2 className="text-lg font-bold text-[#af8978] mb-4">
+              Edit Expense
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Expense Name
+                </label>
+                <input
+                  type="text"
+                  value={editingExpense.label}
+                  onChange={(e) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      label: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-[#af8978]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Expense Date
+                </label>
+                <input
+                  type="date"
+                  value={editingExpense.date}
+                  onChange={(e) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      date: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-[#af8978]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Expense Amount
+                </label>
+                <input
+                  type="number"
+                  value={editingExpense.value}
+                  onChange={(e) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      value: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-[#af8978]"
+                />
+              </div>
               <button
                 onClick={handleUpdateExpense}
-                className="bg-[#af8978] text-white p-[10px] border-none cursor-pointer my-[10px]"
+                className="w-full bg-[#af8978] text-white font-medium py-2 rounded hover:bg-[#8c6757] transition"
               >
                 Update Expense
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 🧾 Render filtered expenses */}
         {filteredExpenses.length > 0 ? (
           filteredExpenses.map((expense) => (
             <div
               key={expense._id}
-              className="relative flex justify-between items-center w-[80vw] h-[50px] bg-[#f3edeb] my-[20px] py-[10px]"
+              className="relative flex justify-between items-center w-[80vw] h-[50px] bg-[#f3edeb] my-[20px] py-[10px] px-[20px] rounded"
             >
-              <h2 className="m-[20px] text-[#555] text-[18px] font-medium">
+              <h2 className="text-[#555] text-[18px] font-medium">
                 {expense.label}
               </h2>
-              <span className="m-[20px] text-[#555] text-[14px]">
-                {expense.date}
-              </span>
-              <span className="m-[20px] text-[14px] font-medium">
-                ₹ {expense.value}
-              </span>
-              <div className="m-[20px] grid">
+              <span className="text-[#555] text-[14px]">{expense.date}</span>
+              <span className="text-[14px] font-medium">₹ {expense.value}</span>
+              <div className="flex gap-3">
                 <FaTrash
-                  className="text-[red] mb-[5px] cursor-pointer"
+                  className="text-[red] cursor-pointer"
                   onClick={() => handleDelete(expense._id)}
                 />
                 <FaEdit
-                  className="text-[red] mb-[5px] cursor-pointer"
-                  onClick={() => handleEditClick(expense)}
+                  className="text-[red] cursor-pointer"
+                  onClick={(e) => handleEditClick(expense, e)}
                 />
               </div>
             </div>
